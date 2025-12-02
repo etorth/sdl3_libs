@@ -1,5 +1,8 @@
 include(ExternalProject)
 
+ExternalProject_Get_Property(libSDL3 INSTALL_DIR)
+set(SDL3_INSTALL_DIR ${INSTALL_DIR})
+
 ExternalProject_Add(
     libSDL3_ttf
 
@@ -12,6 +15,7 @@ ExternalProject_Add(
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=Release
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_PREFIX_PATH=${SDL3_INSTALL_DIR}
         -DBUILD_SHARED_LIBS=OFF
         -DSDL3TTF_STATIC=ON
         -DSDL3TTF_SHARED=OFF
