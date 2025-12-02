@@ -1,0 +1,29 @@
+include(ExternalProject)
+
+ExternalProject_Add(
+    libSDL3
+
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG release-3.2.26
+
+    GIT_SHALLOW TRUE
+
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DBUILD_SHARED_LIBS=OFF
+        -DSDL_STATIC=ON
+        -DSDL_SHARED=OFF
+
+    BUILD_BYPRODUCTS
+        <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}SDL3${CMAKE_STATIC_LIBRARY_SUFFIX}
+)
+
+ExternalProject_Get_Property(libSDL3 INSTALL_DIR)
+
+add_library(SDL3::SDL3 STATIC IMPORTED GLOBAL)
+set_target_properties(SDL3::SDL3 PROPERTIES
+    IMPORTED_LOCATION ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}SDL3${CMAKE_STATIC_LIBRARY_SUFFIX}
+    INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include
+)
+add_dependencies(SDL3::SDL3 libSDL3)
