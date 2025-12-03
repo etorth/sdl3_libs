@@ -12,6 +12,7 @@ ExternalProject_Add(
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
     GIT_TAG release-3.2.26
     GIT_SHALLOW TRUE
+    GIT_SUBMODULES_RECURSE TRUE
 
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=Release
@@ -33,6 +34,7 @@ ExternalProject_Add(
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
     GIT_TAG release-3.2.2
     GIT_SHALLOW TRUE
+    GIT_SUBMODULES_RECURSE TRUE
 
     CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=Release
