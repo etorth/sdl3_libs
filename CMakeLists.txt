@@ -1,0 +1,64 @@
+cmake_minimum_required(VERSION 3.20)
+project(SDL3_Superbuild)
+
+include(ExternalProject)
+
+set(SUPERBUILD_INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
+
+# Build SDL3
+ExternalProject_Add(
+    libSDL3
+
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG release-3.2.26
+    GIT_SHALLOW TRUE
+
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_INSTALL_PREFIX=${SUPERBUILD_INSTALL_DIR}
+        -DBUILD_SHARED_LIBS=OFF
+        -DSDL_STATIC=ON
+        -DSDL_SHARED=OFF
+
+    BUILD_BYPRODUCTS
+        ${SUPERBUILD_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}SDL3${CMAKE_STATIC_LIBRARY_SUFFIX}
+)
+
+# Build SDL3_ttf
+ExternalProject_Add(
+    libSDL3_ttf
+
+    DEPENDS libSDL3
+
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
+    GIT_TAG release-3.2.2
+    GIT_SHALLOW TRUE
+
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_INSTALL_PREFIX=${SUPERBUILD_INSTALL_DIR}
+        -DCMAKE_PREFIX_PATH=${SUPERBUILD_INSTALL_DIR}
+        -DBUILD_SHARED_LIBS=OFF
+        -DSDL3TTF_STATIC=ON
+        -DSDL3TTF_SHARED=OFF
+
+    BUILD_BYPRODUCTS
+        ${SUPERBUILD_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}SDL3_ttf${CMAKE_STATIC_LIBRARY_SUFFIX}
+)
+
+# Build sdl3_test
+ExternalProject_Add(
+    sdl3_test
+
+    DEPENDS libSDL3 libSDL3_ttf
+
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test
+    BINARY_DIR ${CMAKE_BINARY_DIR}/sdl3_test-build
+
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_PREFIX_PATH=${SUPERBUILD_INSTALL_DIR}
+
+    BUILD_ALWAYS TRUE
+    INSTALL_COMMAND ""
+)
