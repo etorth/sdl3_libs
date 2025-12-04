@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3_gfx/SDL_gfx.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_mixer/SDL_mixer.h>
 #include <vector>
@@ -215,6 +216,8 @@ int main(int argc, char* argv[])
         }
 
         SDL_RenderTexture(g_renderer, g_textTexture, nullptr, &textRect);
+        boxColor(g_renderer, 20, 20, 20, 20, 0XFFFF00FF);
+
         SDL_RenderPresent(g_renderer);
     }
 
