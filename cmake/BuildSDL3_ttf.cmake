@@ -9,7 +9,7 @@ ExternalProject_Add(
     DEPENDS libSDL3
 
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
-    GIT_TAG release-3.2.2
+    GIT_TAG main
 
     GIT_SHALLOW TRUE
     GIT_SUBMODULES_RECURSE TRUE
