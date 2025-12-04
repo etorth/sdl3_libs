@@ -2,11 +2,13 @@
 #include <SDL3/SDL_main.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <SDL3_image/SDL_image.h>
+#include <SDL3_mixer/SDL_mixer.h>
 #include <vector>
 
 // Global init flags
 static bool SDL_inited = false;
 static bool TTF_inited = false;
+static bool MIX_inited = false;
 
 // Global pointers to clean up (optional convenience)
 static SDL_Window* g_window = nullptr;
@@ -15,6 +17,9 @@ static TTF_Font* g_font = nullptr;
 static SDL_Texture* g_textTexture = nullptr;
 static IMG_Animation* g_animation = nullptr;
 static std::vector<SDL_Texture*> g_frameTextures;
+static MIX_Track * g_mixerTrack = nullptr;
+static MIX_Mixer* g_mixer = nullptr;
+static MIX_Audio* g_music = nullptr;
 
 // Standalone helper to get per-frame delay in ms (with sane default)
 static int GetFrameDelayMS(const IMG_Animation* anim, int idx)
@@ -59,6 +64,15 @@ static void CleanUp()
         g_window = nullptr;
     }
 
+    if (g_mixerTrack) {
+        MIX_StopTrack(g_mixerTrack, MIX_TrackMSToFrames(g_mixerTrack, 1000));
+    }
+
+    if (MIX_inited) {
+        MIX_Quit();
+        MIX_inited = false;
+    }
+
     if (TTF_inited) {
         TTF_Quit();
         TTF_inited = false;
@@ -73,7 +87,7 @@ static void CleanUp()
 int main(int argc, char* argv[])
 {
     // Init SDL
-    if (SDL_Init(SDL_INIT_VIDEO)) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         SDL_inited = true;
     } else {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
@@ -86,6 +100,14 @@ int main(int argc, char* argv[])
         TTF_inited = true;
     } else {
         SDL_Log("TTF_Init failed: %s", SDL_GetError());
+        CleanUp();
+        return 1;
+    }
+
+    if (MIX_Init()) {
+        MIX_inited = true;
+    } else {
+        SDL_Log("MIX_Init failed: %s", SDL_GetError());
         CleanUp();
         return 1;
     }
@@ -117,6 +139,24 @@ int main(int argc, char* argv[])
     float textW = static_cast<float>(textSurface->w);
     float textH = static_cast<float>(textSurface->h);
     SDL_DestroySurface(textSurface);
+
+    g_mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
+    if (g_mixer == nullptr) {
+        SDL_Log("Failed to create mixer device: %s", SDL_GetError());
+        CleanUp();
+        return 1;
+    }
+
+    g_mixerTrack = MIX_CreateTrack(g_mixer);
+    g_music = MIX_LoadAudio(g_mixer, "sound.ogg", false);
+    if (not g_music) {
+        SDL_Log("Failed to load music: %s", SDL_GetError());
+        CleanUp();
+        return 1;
+    }
+
+    MIX_SetTrackAudio(g_mixerTrack, g_music);
+    MIX_PlayTrack(g_mixerTrack, NULL);
 
     // Load APNG animation
     g_animation = IMG_LoadAnimation("elephant.png");
