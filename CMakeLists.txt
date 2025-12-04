@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.20)
-project(SDL3_Superbuild)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
+PROJECT(SDL3_Superbuild)
 
-include(ExternalProject)
+INCLUDE(ExternalProject)
 
-set(SUPERBUILD_INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
+SET(SUPERBUILD_INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 
 # Build SDL3
 ExternalProject_Add(

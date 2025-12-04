@@ -1,5 +1,8 @@
-find_package(SDL3 REQUIRED)
-find_package(SDL3_ttf REQUIRED)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
+PROJECT(sdl3_test)
 
-add_executable(sdl3_test main.cpp)
-target_link_libraries(sdl3_test PRIVATE SDL3::SDL3 SDL3_ttf::SDL3_ttf)
+FIND_PACKAGE(SDL3 REQUIRED)
+FIND_PACKAGE(SDL3_ttf REQUIRED)
+
+ADD_EXECUTABLE(sdl3_test main.cpp)
+TARGET_LINK_LIBRARIES(sdl3_test PRIVATE SDL3::SDL3 SDL3_ttf::SDL3_ttf)

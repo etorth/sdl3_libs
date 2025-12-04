@@ -1,7 +1,7 @@
-include(ExternalProject)
+INCLUDE(ExternalProject)
 
 ExternalProject_Get_Property(libSDL3 INSTALL_DIR)
-set(SDL3_INSTALL_DIR ${INSTALL_DIR})
+SET(SDL3_INSTALL_DIR ${INSTALL_DIR})
 
 ExternalProject_Add(
     libSDL3_ttf
@@ -26,9 +26,9 @@ ExternalProject_Add(
 
 ExternalProject_Get_Property(libSDL3_ttf INSTALL_DIR)
 
-add_library(SDL3_ttf::SDL3_ttf STATIC IMPORTED GLOBAL)
-set_target_properties(SDL3_ttf::SDL3_ttf PROPERTIES
+ADD_LIBRARY(SDL3_ttf::SDL3_ttf STATIC IMPORTED GLOBAL)
+SET_TARGET_PROPERTIES(SDL3_ttf::SDL3_ttf PROPERTIES
     IMPORTED_LOCATION ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}SDL3_ttf${CMAKE_STATIC_LIBRARY_SUFFIX}
     INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include
 )
-add_dependencies(SDL3_ttf::SDL3_ttf libSDL3_ttf)
+ADD_DEPENDENCIES(SDL3_ttf::SDL3_ttf libSDL3_ttf)
