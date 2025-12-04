@@ -1,53 +1,155 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3_image/SDL_image.h>
+#include <vector>
+
+// Global init flags
+static bool SDL_inited = false;
+static bool TTF_inited = false;
+
+// Global pointers to clean up (optional convenience)
+static SDL_Window* g_window = nullptr;
+static SDL_Renderer* g_renderer = nullptr;
+static TTF_Font* g_font = nullptr;
+static SDL_Texture* g_textTexture = nullptr;
+static IMG_Animation* g_animation = nullptr;
+static std::vector<SDL_Texture*> g_frameTextures;
+
+// Standalone helper to get per-frame delay in ms (with sane default)
+static int GetFrameDelayMS(const IMG_Animation* anim, int idx)
+{
+    if (!anim || anim->count <= 0) return 100;
+    if (idx < 0 || idx >= anim->count) return 100;
+    int delay = anim->delays ? anim->delays[idx] : 100;
+    return delay > 0 ? delay : 100;
+}
+
+// Unified cleanup function
+static void CleanUp()
+{
+    // Destroy textures created from animation frames
+    for (SDL_Texture* t : g_frameTextures) {
+        if (t) SDL_DestroyTexture(t);
+    }
+    g_frameTextures.clear();
+
+    if (g_animation) {
+        IMG_FreeAnimation(g_animation);
+        g_animation = nullptr;
+    }
+
+    if (g_textTexture) {
+        SDL_DestroyTexture(g_textTexture);
+        g_textTexture = nullptr;
+    }
+
+    if (g_font) {
+        TTF_CloseFont(g_font);
+        g_font = nullptr;
+    }
+
+    if (g_renderer) {
+        SDL_DestroyRenderer(g_renderer);
+        g_renderer = nullptr;
+    }
+
+    if (g_window) {
+        SDL_DestroyWindow(g_window);
+        g_window = nullptr;
+    }
+
+    if (TTF_inited) {
+        TTF_Quit();
+        TTF_inited = false;
+    }
+
+    if (SDL_inited) {
+        SDL_Quit();
+        SDL_inited = false;
+    }
+}
 
 int main(int argc, char* argv[])
 {
-    if (SDL_Init(SDL_INIT_VIDEO) == false) {
+    // Init SDL
+    if (SDL_Init(SDL_INIT_VIDEO)) {
+        SDL_inited = true;
+    } else {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
+        CleanUp();
         return 1;
     }
 
-    if (TTF_Init() == false) {
+    // Init TTF
+    if (TTF_Init()) {
+        TTF_inited = true;
+    } else {
         SDL_Log("TTF_Init failed: %s", SDL_GetError());
-        SDL_Quit();
+        CleanUp();
         return 1;
     }
 
-    SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
-
-    if (SDL_CreateWindowAndRenderer("SDL3 + TTF Example", 800, 600, 0, &window, &renderer) == false) {
+    // Create window + renderer
+    if (!SDL_CreateWindowAndRenderer("SDL3 + TTF + APNG Example", 800, 600, 0, &g_window, &g_renderer)) {
         SDL_Log("Window/Renderer creation failed: %s", SDL_GetError());
+        CleanUp();
         return 1;
     }
 
-    TTF_Font* font = TTF_OpenFont("yahei.ttf", 64);
-    if (!font) {
+    // Load font
+    g_font = TTF_OpenFont("yahei.ttf", 64);
+    if (!g_font) {
         SDL_Log("Failed to load font: %s", SDL_GetError());
+        CleanUp();
         return 1;
     }
 
+    // Create text texture
     SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Surface* textSurface = TTF_RenderText_Blended(font, "Hello SDL3! 你好!", 0, textColor);
-
+    SDL_Surface* textSurface = TTF_RenderText_Blended(g_font, "Hello SDL3! 你好!", 0, textColor);
     if (!textSurface) {
-        SDL_Log("Failed to create surface: %s", SDL_GetError());
+        SDL_Log("Failed to create text surface: %s", SDL_GetError());
+        CleanUp();
         return 1;
     }
-
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-
+    g_textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
     float textW = static_cast<float>(textSurface->w);
     float textH = static_cast<float>(textSurface->h);
-
     SDL_DestroySurface(textSurface);
 
+    // Load APNG animation
+    g_animation = IMG_LoadAnimation("elephant.png");
+    if (!g_animation) {
+        SDL_Log("Failed to load APNG animation: %s", SDL_GetError());
+        CleanUp();
+        return 1;
+    }
+
+    // Convert frames to textures
+    g_frameTextures.resize(g_animation->count, nullptr);
+    for (int i = 0; i < g_animation->count; ++i) {
+        SDL_Surface* frameSurface = g_animation->frames[i];
+        if (!frameSurface) continue;
+        g_frameTextures[i] = SDL_CreateTextureFromSurface(g_renderer, frameSurface);
+        if (!g_frameTextures[i]) {
+            SDL_Log("Failed to create texture for frame %d: %s", i, SDL_GetError());
+        }
+    }
+
+    // Layout
+    SDL_FRect textRect = { (800 - textW) / 2.0f, (600 - textH) / 2.0f, textW, textH };
+    int frameW = (g_animation->count > 0 && g_animation->frames[0]) ? g_animation->frames[0]->w : 0;
+    int frameH = (g_animation->count > 0 && g_animation->frames[0]) ? g_animation->frames[0]->h : 0;
+    SDL_FRect apngRect = { 20.0f, 20.0f, static_cast<float>(frameW), static_cast<float>(frameH) };
+
+    // Animation state
     bool running = true;
     SDL_Event event;
-    SDL_FRect dstRect = { (800 - textW) / 2, (600 - textH) / 2, textW, textH };
+    int currentFrame = 0;
+    Uint64 frameStartMS = SDL_GetTicks();
 
+    // Main loop
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
@@ -55,19 +157,27 @@ int main(int argc, char* argv[])
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
+        Uint64 nowMS = SDL_GetTicks();
+        int currentDelay = GetFrameDelayMS(g_animation, currentFrame);
+        if (nowMS - frameStartMS >= static_cast<Uint64>(currentDelay)) {
+            currentFrame = (currentFrame + 1) % g_animation->count;
+            frameStartMS = nowMS;
+        }
 
-        SDL_RenderTexture(renderer, textTexture, NULL, &dstRect);
-        SDL_RenderPresent(renderer);
+        SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+        SDL_RenderClear(g_renderer);
+
+        SDL_Texture* apngTex = (currentFrame >= 0 && currentFrame < (int)g_frameTextures.size())
+                                 ? g_frameTextures[currentFrame]
+                                 : nullptr;
+        if (apngTex) {
+            SDL_RenderTexture(g_renderer, apngTex, nullptr, &apngRect);
+        }
+
+        SDL_RenderTexture(g_renderer, g_textTexture, nullptr, &textRect);
+        SDL_RenderPresent(g_renderer);
     }
 
-    SDL_DestroyTexture(textTexture);
-    TTF_CloseFont(font);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    TTF_Quit();
-    SDL_Quit();
-
+    CleanUp();
     return 0;
 }
