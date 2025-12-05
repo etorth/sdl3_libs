@@ -16,7 +16,7 @@ IF(BUILD_TEST)
     ExternalProject_Add(
         sdl3_test
 
-        DEPENDS libSDL3 libSDL3_ttf libSDL3_image libSDL3_gfx
+        DEPENDS libSDL3 libSDL3_ttf libSDL3_image libSDL3_gfx libSDL3_mixer
 
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test
         BINARY_DIR ${CMAKE_BINARY_DIR}/sdl3_test-build
