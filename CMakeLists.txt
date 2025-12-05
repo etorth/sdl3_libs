@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.20)
 PROJECT(sdl3_superbuild)
 
+OPTION(BUILD_TEST "Build test directory" ON)
+
 SET(SUPERBUILD_INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 
 FILE(GLOB EXTPROJ_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/*.cmake")
@@ -10,18 +12,20 @@ FOREACH(SCRIPT ${EXTPROJ_SCRIPTS})
 ENDFOREACH()
 
 INCLUDE(ExternalProject)
-ExternalProject_Add(
-    sdl3_test
+IF(BUILD_TEST)
+    ExternalProject_Add(
+        sdl3_test
 
-    DEPENDS libSDL3 libSDL3_ttf libSDL3_image libSDL3_gfx
+        DEPENDS libSDL3 libSDL3_ttf libSDL3_image libSDL3_gfx
 
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test
-    BINARY_DIR ${CMAKE_BINARY_DIR}/sdl3_test-build
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test
+        BINARY_DIR ${CMAKE_BINARY_DIR}/sdl3_test-build
 
-    CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=Debug
-        -DCMAKE_PREFIX_PATH=${SUPERBUILD_INSTALL_DIR}
+        CMAKE_ARGS
+            -DCMAKE_BUILD_TYPE=Debug
+            -DCMAKE_PREFIX_PATH=${SUPERBUILD_INSTALL_DIR}
 
-    BUILD_ALWAYS TRUE
-    INSTALL_COMMAND ""
-)
+        BUILD_ALWAYS TRUE
+        INSTALL_COMMAND ""
+    )
+ENDIF()
