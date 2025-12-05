@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
         }
 
         SDL_RenderTexture(g_renderer, g_textTexture, nullptr, &textRect);
-        boxColor(g_renderer, 20, 20, 20, 20, 0XFFFF00FF);
+        boxRGBA(g_renderer, 0, 0, 20, 20, 0, 0, 255, 255);
 
         SDL_RenderPresent(g_renderer);
     }
