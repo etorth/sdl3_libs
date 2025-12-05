@@ -1,14 +1,11 @@
 INCLUDE(ExternalProject)
 
-ExternalProject_Get_Property(libSDL3 INSTALL_DIR)
-SET(SDL3_INSTALL_DIR ${INSTALL_DIR})
-
 ExternalProject_Add(
     libSDL3_gfx
 
     DEPENDS libSDL3
 
-    GIT_REPOSITORY https://github.com/sabdul-khabir/SDL3_gfx.git
+    GIT_REPOSITORY https://github.com/etorth/SDL3_gfx.git
     GIT_TAG master
 
     GIT_SHALLOW TRUE
@@ -19,6 +16,7 @@ ExternalProject_Add(
         -DCMAKE_INSTALL_PREFIX=${SUPERBUILD_INSTALL_DIR}
         -DCMAKE_PREFIX_PATH=${SUPERBUILD_INSTALL_DIR}
         -DSDL3_INCLUDE_DIR=${SUPERBUILD_INSTALL_DIR}/include
+        -DBUILD_SHARED_LIBS=OFF
 
     BUILD_BYPRODUCTS
         ${SUPERBUILD_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}SDL3_gfx${CMAKE_STATIC_LIBRARY_SUFFIX}
